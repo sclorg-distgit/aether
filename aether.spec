@@ -10,7 +10,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        1.13.1
-Release:        13.12%{?dist}
+Release:        13.13%{?dist}
 Summary:        Sonatype library to resolve, install and deploy artifacts the Maven way
 License:        EPL or ASL 2.0
 URL:            https://docs.sonatype.org/display/AETHER/Home
@@ -22,16 +22,16 @@ Source2:        http://www.eclipse.org/legal/epl-v10.html
 BuildArch:      noarch
 
 BuildRequires:  %{?scl_prefix_java_common}maven-local
-BuildRequires:  maven30-mvn(org.apache.maven.wagon:wagon-provider-api)
-BuildRequires:  maven30-mvn(org.codehaus.plexus:plexus-classworlds)
-BuildRequires:  maven30-mvn(org.codehaus.plexus:plexus-component-annotations)
-BuildRequires:  maven30-mvn(org.codehaus.plexus:plexus-component-metadata)
-BuildRequires:  maven30-mvn(org.codehaus.plexus:plexus-utils)
+BuildRequires:  %{?scl_prefix}mvn(org.apache.maven.wagon:wagon-provider-api)
+BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-classworlds)
+BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-component-annotations)
+BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-component-metadata)
+BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-utils)
 BuildRequires:  %{?scl_prefix_java_common}mvn(org.slf4j:slf4j-api)
-BuildRequires:  maven30-mvn(org.sonatype.forge:forge-parent:pom:)
-BuildRequires:  maven30-mvn(org.sonatype.sisu:sisu-inject-plexus)
+BuildRequires:  %{?scl_prefix}mvn(org.sonatype.forge:forge-parent:pom:)
+BuildRequires:  %{?scl_prefix}mvn(org.sonatype.sisu:sisu-inject-plexus)
 %if %{with ahc}
-BuildRequires:  maven30-mvn(com.ning:async-http-client)
+BuildRequires:  %{?scl_prefix}mvn(com.ning:async-http-client)
 %endif
 
 %description
@@ -115,7 +115,7 @@ for Aether.
 
 %prep
 %setup -q -n %{pkg_name}-%{version}
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 cp -p %{SOURCE1} LICENSE-ASL
 cp -p %{SOURCE2} LICENSE-EPL
@@ -155,13 +155,13 @@ done
 %{?scl:EOF}
 
 %build
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 %mvn_build -s
 %{?scl:EOF}
 
 %install
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 %mvn_install
 %{?scl:EOF}
@@ -190,6 +190,9 @@ set -e -x
 %endif
 
 %changelog
+* Mon Jan 11 2016 Michal Srb <msrb@redhat.com> - 1.13.1-13.13
+- maven33 rebuild #2
+
 * Sat Jan 09 2016 Michal Srb <msrb@redhat.com> - 1.13.1-13.12
 - maven33 rebuild
 
