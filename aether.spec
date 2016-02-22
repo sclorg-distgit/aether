@@ -2,37 +2,35 @@
 %{?scl:%scl_package %{pkg_name}}
 %{?maven_find_provides_and_requires}
 
-# Conditionals to build Aether with or without AHC connector
-# (connector for Async Http Client).
-%if 0%{?fedora}
-%bcond_without ahc
-%endif
+%global vertag v20150114
 
 Name:           %{?scl_prefix}%{pkg_name}
-Version:        1.13.1
-Release:        13.13%{?dist}
-Summary:        Sonatype library to resolve, install and deploy artifacts the Maven way
-License:        EPL or ASL 2.0
-URL:            https://docs.sonatype.org/display/AETHER/Home
-# git clone https://github.com/sonatype/sonatype-aether.git
-# git archive --prefix="aether-1.11/" --format=tar aether-1.11 | bzip2 > aether-1.11.tar.bz2
-Source0:        %{pkg_name}-%{version}.tar.bz2
-Source1:        http://www.apache.org/licenses/LICENSE-2.0.txt
-Source2:        http://www.eclipse.org/legal/epl-v10.html
+Epoch:          1
+Version:        1.0.2
+Release:        3.1%{?dist}
+Summary:        Library to resolve, install and deploy artifacts the Maven way
+License:        EPL
+URL:            http://eclipse.org/aether
 BuildArch:      noarch
 
+Source0:        http://git.eclipse.org/c/%{pkg_name}/%{pkg_name}-core.git/snapshot/%{pkg_name}-%{version}.%{vertag}.tar.bz2
+
 BuildRequires:  %{?scl_prefix_java_common}maven-local
+BuildRequires:  %{?scl_prefix}mvn(com.google.inject:guice::no_aop:)
+BuildRequires:  %{?scl_prefix_java_common}mvn(javax.inject:javax.inject)
+BuildRequires:  %{?scl_prefix}mvn(org.apache.felix:maven-bundle-plugin)
+BuildRequires:  %{?scl_prefix_java_common}mvn(org.apache.httpcomponents:httpclient)
 BuildRequires:  %{?scl_prefix}mvn(org.apache.maven.wagon:wagon-provider-api)
+BuildRequires:  %{?scl_prefix}mvn(org.codehaus.mojo:build-helper-maven-plugin) >= 1.7
 BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-classworlds)
 BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-component-annotations)
 BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-component-metadata)
 BuildRequires:  %{?scl_prefix}mvn(org.codehaus.plexus:plexus-utils)
+BuildRequires:  %{?scl_prefix}mvn(org.eclipse.sisu:org.eclipse.sisu.plexus)
+BuildRequires:  %{?scl_prefix}mvn(org.eclipse.sisu:sisu-maven-plugin)
+BuildRequires:  %{?scl_prefix_java_common}mvn(org.hamcrest:hamcrest-library)
+BuildRequires:  %{?scl_prefix_java_common}mvn(org.slf4j:jcl-over-slf4j)
 BuildRequires:  %{?scl_prefix_java_common}mvn(org.slf4j:slf4j-api)
-BuildRequires:  %{?scl_prefix}mvn(org.sonatype.forge:forge-parent:pom:)
-BuildRequires:  %{?scl_prefix}mvn(org.sonatype.sisu:sisu-inject-plexus)
-%if %{with ahc}
-BuildRequires:  %{?scl_prefix}mvn(com.ning:async-http-client)
-%endif
 
 %description
 Aether is a standalone library to resolve, install and deploy artifacts
@@ -46,31 +44,13 @@ Aether is a standalone library to resolve, install and deploy
 artifacts the Maven way.  This package provides application
 programming interface for Aether repository system.
 
-%if %{with ahc}
-%package connector-asynchttpclient
-Summary: Aether connector for Async Http Client
+%package connector-basic
+Summary: Aether Connector Basic
 
-%description connector-asynchttpclient
+%description connector-basic
 Aether is a standalone library to resolve, install and deploy
-artifacts the Maven way.  This package provides Aether repository
-connector implementation based on Async Http Client.
-%endif
-
-%package connector-file
-Summary: Aether connector for file URLs
-
-%description connector-file
-Aether is a standalone library to resolve, install and deploy
-artifacts the Maven way.  This package provides Aether repository
-connector implementation for repositories using file:// URLs.
-
-%package connector-wagon
-Summary: Aether connector for Maven Wagon
-
-%description connector-wagon
-Aether is a standalone library to resolve, install and deploy
-artifacts the Maven way.  This package provides Aether repository
-connector implementation based on Maven Wagon.
+artifacts the Maven way.  This package provides repository connector
+implementation for repositories using URI-based layouts.
 
 %package impl
 Summary: Implementation of Aether repository system
@@ -97,6 +77,38 @@ Aether is a standalone library to resolve, install and deploy
 artifacts the Maven way.  This package provides collection of utility
 classes that ease testing of Aether repository system.
 
+%package transport-classpath
+Summary: Aether Transport Classpath
+
+%description transport-classpath
+Aether is a standalone library to resolve, install and deploy
+artifacts the Maven way.  This package provides a transport
+implementation for repositories using classpath:// URLs.
+
+%package transport-file
+Summary: Aether Transport File
+
+%description transport-file
+Aether is a standalone library to resolve, install and deploy
+artifacts the Maven way.  This package provides a transport
+implementation for repositories using file:// URLs.
+
+%package transport-http
+Summary: Aether Transport HTTP
+
+%description transport-http
+Aether is a standalone library to resolve, install and deploy
+artifacts the Maven way.  This package provides a transport
+implementation for repositories using http:// and https:// URLs.
+
+%package transport-wagon
+Summary: Aether Transport Wagon
+
+%description transport-wagon
+Aether is a standalone library to resolve, install and deploy
+artifacts the Maven way.  This package provides a transport
+implementation based on Maven Wagon.
+
 %package util
 Summary: Aether utilities
 
@@ -114,44 +126,33 @@ artifacts the Maven way.  This package provides Java API documentation
 for Aether.
 
 %prep
-%setup -q -n %{pkg_name}-%{version}
+%setup -q -n %{pkg_name}-%{version}.%{vertag}
+
 %{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
-cp -p %{SOURCE1} LICENSE-ASL
-cp -p %{SOURCE2} LICENSE-EPL
-
-%if %{without ahc}
-%pom_disable_module aether-connector-asynchttpclient
-%endif
-
-# we'd need org.sonatype.http-testing-harness so let's remove async
-# and wagon http tests (leave others enabled)
-for module in asynchttpclient wagon; do (
-    cd ./aether-connector-$module
-    rm -rf src/test
-    # Removes all dependencies with test scope
-    %pom_xpath_remove "pom:dependency[pom:scope[text()='test']]"
-) done
-
 # Remove clirr plugin
 %pom_remove_plugin :clirr-maven-plugin
 %pom_remove_plugin :clirr-maven-plugin aether-api
+%pom_remove_plugin :clirr-maven-plugin aether-util
 %pom_remove_plugin :clirr-maven-plugin aether-spi
 
 # Animal sniffer is not useful in Fedora
-for module in . aether-connector-wagon aether-util aether-api   \
-              aether-impl aether-connector-asynchttpclient      \
-              aether-connector-file aether-demo aether-test-util; do
+for module in . aether-api aether-connector-basic aether-impl   \
+              aether-spi aether-test-util aether-transport-file \
+              aether-transport-classpath aether-transport-http  \
+              aether-transport-wagon aether-util; do
     %pom_remove_plugin :animal-sniffer-maven-plugin $module
 done
 
-# Workaround for rhbz#911365
-%pom_xpath_inject pom:project "<dependencies/>"
-%pom_add_dep cglib:cglib:any:test
+# HTTP transport tests require Jetty 7 and networking.
+rm -rf aether-transport-http/src/test
+%pom_xpath_remove "pom:dependency[pom:scope='test']" aether-transport-http
 
-# Keep compatibility with packages that use old JAR locations until
-# they migrate.
-%mvn_file ":{%{pkg_name}-{*}}" %{pkg_name}/@1 %{pkg_name}/@2
+%pom_remove_plugin :maven-enforcer-plugin
+
+# Upstream uses Sisu 0.0.0.M4, but Fedora has 0.0.0.M5.  In M5 scope
+# of Guice dependency was changed from "compile" to "provided".
+%pom_add_dep com.google.inject:guice::provided . "<classifier>no_aop</classifier>"
 %{?scl:EOF}
 
 %build
@@ -168,77 +169,82 @@ set -e -x
 
 %files -f .mfiles-%{pkg_name}
 %doc README.md
-%doc LICENSE-ASL LICENSE-EPL
+%doc epl-v10.html notice.html
 
 %files api -f .mfiles-%{pkg_name}-api
 %doc README.md
-%doc LICENSE-ASL LICENSE-EPL
-%dir %{_mavenpomdir}/%{pkg_name}
+%doc epl-v10.html notice.html
 %dir %{_javadir}/%{pkg_name}
 
-%files connector-file -f .mfiles-%{pkg_name}-connector-file
-%files connector-wagon -f .mfiles-%{pkg_name}-connector-wagon
+%files connector-basic -f .mfiles-%{pkg_name}-connector-basic
 %files impl -f .mfiles-%{pkg_name}-impl
 %files spi -f .mfiles-%{pkg_name}-spi
 %files test-util -f .mfiles-%{pkg_name}-test-util
+%files transport-classpath -f .mfiles-%{pkg_name}-transport-classpath
+%files transport-file -f .mfiles-%{pkg_name}-transport-file
+%files transport-http -f .mfiles-%{pkg_name}-transport-http
+%files transport-wagon -f .mfiles-%{pkg_name}-transport-wagon
 %files util -f .mfiles-%{pkg_name}-util
 %files javadoc -f .mfiles-javadoc
-%doc LICENSE-ASL LICENSE-EPL
-
-%if %{with ahc}
-%files connector-asynchttpclient -f .mfiles-%{pkg_name}-connector-asynchttpclient
-%endif
+%doc epl-v10.html notice.html
 
 %changelog
-* Mon Jan 11 2016 Michal Srb <msrb@redhat.com> - 1.13.1-13.13
-- maven33 rebuild #2
+* Tue Jan 12 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.2-3.1
+- SCL-ize package
 
-* Sat Jan 09 2016 Michal Srb <msrb@redhat.com> - 1.13.1-13.12
-- maven33 rebuild
+* Thu Jul 23 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.2-3
+- Remove Plexus support
 
-* Thu Jan 15 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.11
-- Add directory ownership on %%{_mavenpomdir} subdir
+* Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.0.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
-* Tue Jan 13 2015 Michael Simacek <msimacek@redhat.com> - 1.13.1-13.10
-- Mass rebuild 2015-01-13
+* Wed Feb  4 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.2-1
+- Update to upstream version 1.0.2
 
-* Mon Jan 12 2015 Michael Simacek <msimacek@redhat.com> - 1.13.1-13.9
-- Rebuild to regenerate requires from java-common
+* Wed Feb  4 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.1-1
+- Update to upstream version 1.0.1
 
-* Tue Jan 06 2015 Michael Simacek <msimacek@redhat.com> - 1.13.1-13.8
-- Mass rebuild 2015-01-06
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.0.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
-* Mon May 26 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.7
-- Mass rebuild 2014-05-26
+* Wed May 21 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.0-2
+- Bring back Plexus support
 
-* Wed Feb 19 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.6
-- Mass rebuild 2014-02-19
+* Tue May 20 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.0-1
+- Update to upstream version 1.0.0
 
-* Tue Feb 18 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.5
-- Mass rebuild 2014-02-18
+* Tue Apr  1 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.1-1
+- Update to upstream version 0.9.1
 
-* Mon Feb 17 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.4
-- Add missing BR: plexus-component-metadata
+* Thu Feb 27 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-1
+- Update to upstream version 0.9.0
 
-* Mon Feb 17 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.3
-- SCL-ize requires and build-requires
+* Mon Jan  6 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-0.5.M4
+- Update to upstream version 0.9.0.M4
+- Remove workaround for rhbz#911365
 
-* Thu Feb 13 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.2
-- Rebuild to regenerate auto-requires
+* Wed Aug 14 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-0.4.M3
+- Add missing Obsoletes: aether-connector-file
+- Resolves: rhbz#996764
 
-* Tue Feb 11 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-13.1
-- First maven30 software collection build
+* Mon Aug 12 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-0.3.M3
+- Update to upstream version 0.9.0.M3
 
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.13.1-13
-- Mass rebuild 2013-12-27
+* Thu Jul 25 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-0.2.M2
+- Remove remains of Sonatype Aether
+- Port from Sonatype Sisu to Eclipse Sisu, resolves: rhbz#985691
 
-* Fri Jun 28 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-12
+* Fri Jul 19 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:0.9.0-0.M2.1
+- Switch upstream from Sonatype to Eclipse
+- Update to upstream version 0.9.0.M2
+- Install Sonatype Aether in pararell to Eclipse Aether
+
+* Fri Jul 19 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-12
+- Add symlinks to Sonatype Aether
+
+* Wed Jun 26 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-11
 - Install license files
-- Resolves: rhbz#958117
-
-* Fri Jun 28 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-11
-- Rebuild to regenerate API documentation
-- Resolves: CVE-2013-1571
+- Resolves: rhbz#958116
 
 * Fri May 10 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.13.1-10
 - Conditionally build without AHC connector
