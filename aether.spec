@@ -7,7 +7,7 @@
 Name:           %{?scl_prefix}%{pkg_name}
 Epoch:          1
 Version:        1.0.2
-Release:        3.1%{?dist}
+Release:        3.2%{?dist}
 Summary:        Library to resolve, install and deploy artifacts the Maven way
 License:        EPL
 URL:            http://eclipse.org/aether
@@ -15,7 +15,7 @@ BuildArch:      noarch
 
 Source0:        http://git.eclipse.org/c/%{pkg_name}/%{pkg_name}-core.git/snapshot/%{pkg_name}-%{version}.%{vertag}.tar.bz2
 
-BuildRequires:  %{?scl_prefix_java_common}maven-local
+BuildRequires:  %{?scl_prefix}maven-local
 BuildRequires:  %{?scl_prefix}mvn(com.google.inject:guice::no_aop:)
 BuildRequires:  %{?scl_prefix_java_common}mvn(javax.inject:javax.inject)
 BuildRequires:  %{?scl_prefix}mvn(org.apache.felix:maven-bundle-plugin)
@@ -189,6 +189,9 @@ set -e -x
 %doc epl-v10.html notice.html
 
 %changelog
+* Mon Feb 08 2016 Michal Srb <msrb@redhat.com> - 1:1.0.2-3.2
+- Fix BR on maven-local & co.
+
 * Tue Jan 12 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.0.2-3.1
 - SCL-ize package
 
