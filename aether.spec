@@ -7,7 +7,7 @@
 Name:           %{?scl_prefix}%{pkg_name}
 Epoch:          1
 Version:        1.0.2
-Release:        3.2%{?dist}
+Release:        3.3%{?dist}
 Summary:        Library to resolve, install and deploy artifacts the Maven way
 License:        EPL
 URL:            http://eclipse.org/aether
@@ -170,11 +170,13 @@ set -e -x
 %files -f .mfiles-%{pkg_name}
 %doc README.md
 %doc epl-v10.html notice.html
+%dir %{_mavenpomdir}/%{pkg_name}
 
 %files api -f .mfiles-%{pkg_name}-api
 %doc README.md
 %doc epl-v10.html notice.html
 %dir %{_javadir}/%{pkg_name}
+%dir %{_mavenpomdir}/%{pkg_name}
 
 %files connector-basic -f .mfiles-%{pkg_name}-connector-basic
 %files impl -f .mfiles-%{pkg_name}-impl
@@ -189,6 +191,9 @@ set -e -x
 %doc epl-v10.html notice.html
 
 %changelog
+* Thu Apr 14 2016 Michal Srb <msrb@redhat.com> - 1:1.0.2-3.3
+- Fix directory ownership (Resolves: rhbz#1325866)
+
 * Mon Feb 08 2016 Michal Srb <msrb@redhat.com> - 1:1.0.2-3.2
 - Fix BR on maven-local & co.
 
